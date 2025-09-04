@@ -64,6 +64,8 @@ def get_argparser():
     parser.add_argument("--ckpt", default=None, type=str,
                         help="restore from checkpoint")
     parser.add_argument("--continue_training", action='store_true', default=False)
+    parser.add_argument("--freeze", type=str, default=None,
+                        help="freeze classifier layers (by model.classifier.classifier index) during transfer learning")
 
     parser.add_argument("--loss_type", type=str, default='cross_entropy',
                         choices=['cross_entropy', 'focal_loss'], help="loss type (default: False)")
@@ -336,7 +338,24 @@ def main():
     if opts.ckpt is not None and os.path.isfile(opts.ckpt):
         # https://github.com/VainF/DeepLabV3Plus-Pytorch/issues/8#issuecomment-605601402, @PytaichukBohdan
         checkpoint = torch.load(opts.ckpt, map_location=torch.device('cpu'), weights_only=False)
-        model.load_state_dict(checkpoint["model_state"])
+        state = checkpoint["model_state"]
+        classifier_layers = len(model.classifier.classifier)
+        last_layer = classifier_layers - 1 # 256 -> num_classes convolution layer
+        state_num_classes = state[f'classifier.classifier.{last_layer}.weight'].shape[0]
+        model_num_classes = model.classifier.classifier[last_layer].out_channels
+        reset_last_layer = False
+        if state_num_classes != model_num_classes:
+            print('WARNING: Last layer (256 -> num_classes) mismatch - this layer will be reset, and cannot be frozen')
+            model.classifier.classifier[last_layer] = nn.Conv2d(256, state_num_classes, 1) # so we can load the rest
+            reset_last_layer = True
+        model.load_state_dict(state)
+        if opts.freeze is not None:
+            for i in [int(x) for x in opts.freeze.split(',')]:
+                print(f'Freezing classifier layer {i}.')
+                for param in model.classifier.classifier[i].parameters():
+                    param.requires_grad = False
+        if reset_last_layer: # reset last layer (see above) - this also unfreezes the layer
+            model.classifier.classifier[last_layer] = nn.Conv2d(256, model_num_classes, 1)
         model = nn.DataParallel(model)
         model.to(device)
         if opts.continue_training:
