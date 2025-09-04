@@ -85,7 +85,10 @@ def get_argparser():
                         choices=['2012_aug', '2012', '2011', '2009', '2008', '2007'], help='year of VOC')
 
     # DexYCB options
+    parser.add_argument("--setup", type=str, default='s0', choices=['s0', 's1', 's2', 's3', 'custom'], help='DexYCB dataset setup to use')
     parser.add_argument("--num_seq", type=int, default=100, help='number of DexYCB sequences per subject to train/validate/test on')
+    parser.add_argument("--subjects", type=str, default='0,1,2,3,4,5,6,7,8,9', help='DexYCB human subject IDs')
+    parser.add_argument("--serials", type=str, default='0,1,2,3,4,5,6,7', help='DexYCB camera angles')
 
     # Visdom options
     parser.add_argument("--enable_vis", action='store_true', default=False,
@@ -172,8 +175,23 @@ def get_dataset(opts):
                             std=[0.229, 0.224, 0.225]),
         ])
 
-        train_dst = DexYCB(root=opts.data_root, transform=train_transform, num_sequences=opts.num_seq)
-        val_dst = DexYCB(root=opts.data_root, transform=val_transform, num_sequences=opts.num_seq)
+        subjects = [int(x) for x in opts.subjects.split(',')]
+        serials = [int(x) for x in opts.serials.split(',')]
+
+        train_dst = DexYCB(
+            root=opts.data_root,
+            setup=opts.setup, split='train',
+            num_sequences=opts.num_seq,
+            subjects=subjects, serials=serials,
+            transform=train_transform
+        )
+        val_dst = DexYCB(
+            root=opts.data_root,
+            setup=opts.setup, split='val',
+            num_sequences=opts.num_seq,
+            subjects=subjects, serials=serials,
+            transform=train_transform
+        )
 
     return train_dst, val_dst
 

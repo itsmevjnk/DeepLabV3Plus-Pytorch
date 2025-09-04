@@ -82,12 +82,25 @@ class DexYCB(Dataset):
             self, root: str,
             setup: str = 's0', split: str = 'train',
             num_sequences: int = 100,
+            subjects: list[int] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], # only used if setup = 'custom'
+            serials: list[int] = [0, 1, 2, 3, 4, 5, 6, 7], # only used if setup = 'custom'
             transform: torch.nn.Module | None = None
     ):   
-        if setup not in ['s0', 's1', 's2', 's3']: raise ValueError('Invalid setup')
+        if setup not in ['s0', 's1', 's2', 's3', 'custom']: raise ValueError('Invalid setup')
         if split not in ['train', 'val', 'test']: raise ValueError('Invalid split')       
 
         self.transform = transform
+
+        # custom setup: specify subjects and serials, and split based on sequence (like below)
+        if setup == 'custom':
+            subject_ind = subjects
+            serial_ind = serials
+            if split == 'train':
+                sequence_ind = [i for i in range(num_sequences) if i % 5 != 4]
+            if split == 'val':
+                sequence_ind = [i for i in range(num_sequences) if i % 5 == 4]
+            if split == 'test':
+                sequence_ind = [i for i in range(num_sequences) if i % 5 == 4]
 
         # Seen subjects, camera views, grasped objects.
         if setup == 's0':
