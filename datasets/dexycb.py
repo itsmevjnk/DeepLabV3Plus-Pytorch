@@ -96,56 +96,56 @@ class DexYCB(Dataset):
             subject_ind = subjects
             serial_ind = serials
             if split == 'train':
-                sequence_ind = [i for i in range(num_sequences) if i % 5 != 4]
+                sequence_ind = [i for i in range(100) if i % 5 != 4]
             if split == 'val':
-                sequence_ind = [i for i in range(num_sequences) if i % 5 == 4]
+                sequence_ind = [i for i in range(100) if i % 5 == 4]
             if split == 'test':
-                sequence_ind = [i for i in range(num_sequences) if i % 5 == 4]
+                sequence_ind = [i for i in range(100) if i % 5 == 4]
 
         # Seen subjects, camera views, grasped objects.
         if setup == 's0':
             if split == 'train':
                 subject_ind = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
                 serial_ind = [0, 1, 2, 3, 4, 5, 6, 7]
-                sequence_ind = [i for i in range(num_sequences) if i % 5 != 4]
+                sequence_ind = [i for i in range(100) if i % 5 != 4]
             if split == 'val':
                 subject_ind = [0, 1]
                 serial_ind = [0, 1, 2, 3, 4, 5, 6, 7]
-                sequence_ind = [i for i in range(num_sequences) if i % 5 == 4]
+                sequence_ind = [i for i in range(100) if i % 5 == 4]
             if split == 'test':
                 subject_ind = [2, 3, 4, 5, 6, 7, 8, 9]
                 serial_ind = [0, 1, 2, 3, 4, 5, 6, 7]
-                sequence_ind = [i for i in range(num_sequences) if i % 5 == 4]
+                sequence_ind = [i for i in range(100) if i % 5 == 4]
 
         # Unseen subjects.
         if setup == 's1':
             if split == 'train':
                 subject_ind = [0, 1, 2, 3, 4, 5, 9]
                 serial_ind = [0, 1, 2, 3, 4, 5, 6, 7]
-                sequence_ind = list(range(num_sequences))
+                sequence_ind = list(range(100))
             if split == 'val':
                 subject_ind = [6]
                 serial_ind = [0, 1, 2, 3, 4, 5, 6, 7]
-                sequence_ind = list(range(num_sequences))
+                sequence_ind = list(range(100))
             if split == 'test':
                 subject_ind = [7, 8]
                 serial_ind = [0, 1, 2, 3, 4, 5, 6, 7]
-                sequence_ind = list(range(num_sequences))
+                sequence_ind = list(range(100))
 
         # Unseen camera views.
         if setup == 's2':
             if split == 'train':
                 subject_ind = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
                 serial_ind = [0, 1, 2, 3, 4, 5]
-                sequence_ind = list(range(num_sequences))
+                sequence_ind = list(range(100))
             if split == 'val':
                 subject_ind = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
                 serial_ind = [6]
-                sequence_ind = list(range(num_sequences))
+                sequence_ind = list(range(100))
             if split == 'test':
                 subject_ind = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
                 serial_ind = [7]
-                sequence_ind = list(range(num_sequences))
+                sequence_ind = list(range(100))
 
         # Unseen grasped objects.
         if setup == 's3':
@@ -153,19 +153,25 @@ class DexYCB(Dataset):
                 subject_ind = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
                 serial_ind = [0, 1, 2, 3, 4, 5, 6, 7]
                 sequence_ind = [
-                i for i in range(num_sequences) if i // 5 not in (3, 7, 11, 15, 19)
+                i for i in range(100) if i // 5 not in (3, 7, 11, 15, 19)
                 ]
             if split == 'val':
                 subject_ind = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
                 serial_ind = [0, 1, 2, 3, 4, 5, 6, 7]
-                sequence_ind = [i for i in range(num_sequences) if i // 5 in (3, 19)]
+                sequence_ind = [i for i in range(100) if i // 5 in (3, 19)]
             if split == 'test':
                 subject_ind = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
                 serial_ind = [0, 1, 2, 3, 4, 5, 6, 7]
-                sequence_ind = [i for i in range(num_sequences) if i // 5 in (7, 11, 15)]
+                sequence_ind = [i for i in range(100) if i // 5 in (7, 11, 15)]
             subject_ind = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
             serial_ind = [0, 1, 2, 3, 4, 5, 6, 7]
-            sequence_ind = [i for i in range(num_sequences) if i // 5 in (7, 11, 15)]
+            sequence_ind = [i for i in range(100) if i // 5 in (7, 11, 15)]
+
+        if num_sequences != 100: # rescale sequence indices
+            sequence_ind = np.array(sequence_ind)
+            sequence_ind = np.unique((sequence_ind / (100 / num_sequences)).astype(int)) # divide, round down, and filter unique sequences
+            sequence_ind = np.unique((sequence_ind * (100 / num_sequences)).astype(int)) # then multiply back, round down, and filter unique sequences (just in case)
+            sequence_ind = sequence_ind.tolist() # convert back to list
 
         self.image_paths = []
         self.label_paths = []
