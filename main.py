@@ -84,6 +84,9 @@ def get_argparser():
     parser.add_argument("--year", type=str, default='2012',
                         choices=['2012_aug', '2012', '2011', '2009', '2008', '2007'], help='year of VOC')
 
+    # DexYCB options
+    parser.add_argument("--num_seq", type=int, default=100, help='number of DexYCB sequences per subject to train/validate/test on')
+
     # Visdom options
     parser.add_argument("--enable_vis", action='store_true', default=False,
                         help="use visdom for visualization")
@@ -169,8 +172,8 @@ def get_dataset(opts):
                             std=[0.229, 0.224, 0.225]),
         ])
 
-        train_dst = DexYCB(root=opts.data_root, transform=train_transform)
-        val_dst = DexYCB(root=opts.data_root, transform=val_transform)
+        train_dst = DexYCB(root=opts.data_root, transform=train_transform, num_sequences=opts.num_seq)
+        val_dst = DexYCB(root=opts.data_root, transform=val_transform, num_sequences=opts.num_seq)
 
     return train_dst, val_dst
 

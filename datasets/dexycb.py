@@ -81,6 +81,7 @@ class DexYCB(Dataset):
     def __init__(
             self, root: str,
             setup: str = 's0', split: str = 'train',
+            num_sequences: int = 100,
             transform: torch.nn.Module | None = None
     ):   
         if setup not in ['s0', 's1', 's2', 's3']: raise ValueError('Invalid setup')
@@ -93,45 +94,45 @@ class DexYCB(Dataset):
             if split == 'train':
                 subject_ind = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
                 serial_ind = [0, 1, 2, 3, 4, 5, 6, 7]
-                sequence_ind = [i for i in range(100) if i % 5 != 4]
+                sequence_ind = [i for i in range(num_sequences) if i % 5 != 4]
             if split == 'val':
                 subject_ind = [0, 1]
                 serial_ind = [0, 1, 2, 3, 4, 5, 6, 7]
-                sequence_ind = [i for i in range(100) if i % 5 == 4]
+                sequence_ind = [i for i in range(num_sequences) if i % 5 == 4]
             if split == 'test':
                 subject_ind = [2, 3, 4, 5, 6, 7, 8, 9]
                 serial_ind = [0, 1, 2, 3, 4, 5, 6, 7]
-                sequence_ind = [i for i in range(100) if i % 5 == 4]
+                sequence_ind = [i for i in range(num_sequences) if i % 5 == 4]
 
         # Unseen subjects.
         if setup == 's1':
             if split == 'train':
                 subject_ind = [0, 1, 2, 3, 4, 5, 9]
                 serial_ind = [0, 1, 2, 3, 4, 5, 6, 7]
-                sequence_ind = list(range(100))
+                sequence_ind = list(range(num_sequences))
             if split == 'val':
                 subject_ind = [6]
                 serial_ind = [0, 1, 2, 3, 4, 5, 6, 7]
-                sequence_ind = list(range(100))
+                sequence_ind = list(range(num_sequences))
             if split == 'test':
                 subject_ind = [7, 8]
                 serial_ind = [0, 1, 2, 3, 4, 5, 6, 7]
-                sequence_ind = list(range(100))
+                sequence_ind = list(range(num_sequences))
 
         # Unseen camera views.
         if setup == 's2':
             if split == 'train':
                 subject_ind = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
                 serial_ind = [0, 1, 2, 3, 4, 5]
-                sequence_ind = list(range(100))
+                sequence_ind = list(range(num_sequences))
             if split == 'val':
                 subject_ind = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
                 serial_ind = [6]
-                sequence_ind = list(range(100))
+                sequence_ind = list(range(num_sequences))
             if split == 'test':
                 subject_ind = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
                 serial_ind = [7]
-                sequence_ind = list(range(100))
+                sequence_ind = list(range(num_sequences))
 
         # Unseen grasped objects.
         if setup == 's3':
@@ -139,19 +140,19 @@ class DexYCB(Dataset):
                 subject_ind = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
                 serial_ind = [0, 1, 2, 3, 4, 5, 6, 7]
                 sequence_ind = [
-                i for i in range(100) if i // 5 not in (3, 7, 11, 15, 19)
+                i for i in range(num_sequences) if i // 5 not in (3, 7, 11, 15, 19)
                 ]
             if split == 'val':
                 subject_ind = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
                 serial_ind = [0, 1, 2, 3, 4, 5, 6, 7]
-                sequence_ind = [i for i in range(100) if i // 5 in (3, 19)]
+                sequence_ind = [i for i in range(num_sequences) if i // 5 in (3, 19)]
             if split == 'test':
                 subject_ind = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
                 serial_ind = [0, 1, 2, 3, 4, 5, 6, 7]
-                sequence_ind = [i for i in range(100) if i // 5 in (7, 11, 15)]
+                sequence_ind = [i for i in range(num_sequences) if i // 5 in (7, 11, 15)]
             subject_ind = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9]
             serial_ind = [0, 1, 2, 3, 4, 5, 6, 7]
-            sequence_ind = [i for i in range(100) if i // 5 in (7, 11, 15)]
+            sequence_ind = [i for i in range(num_sequences) if i // 5 in (7, 11, 15)]
 
         self.image_paths = []
         self.label_paths = []
