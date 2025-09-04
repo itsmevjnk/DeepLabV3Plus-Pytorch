@@ -77,7 +77,7 @@ def voc_cmap(N=256, normalized=False):
     return cmap
 
 class DexYCB(Dataset):
-    cmap = voc_cmap(22) # objects (1-21) + hand (22)
+    cmap = voc_cmap() # objects (1-21) + hand (22)
     def __init__(
             self, root: str,
             setup: str = 's0', split: str = 'train',
