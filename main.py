@@ -93,6 +93,7 @@ def get_argparser():
     parser.add_argument("--num_seq", type=int, default=100, help='number of DexYCB sequences per subject to train/validate/test on')
     parser.add_argument("--subjects", type=str, default='0,1,2,3,4,5,6,7,8,9', help='DexYCB human subject IDs')
     parser.add_argument("--serials", type=str, default='0,1,2,3,4,5,6,7', help='DexYCB camera angles')
+    parser.add_argument("--frame_stride", type=int, default='1', help='stride between used DexYCB frames')
 
     # Visdom options
     parser.add_argument("--enable_vis", action='store_true', default=False,
@@ -187,6 +188,7 @@ def get_dataset(opts):
             setup=opts.setup, split='train',
             num_sequences=opts.num_seq,
             subjects=subjects, serials=serials,
+            frame_stride=opts.frame_stride,
             transform=train_transform
         )
         val_dst = DexYCB(
@@ -194,6 +196,7 @@ def get_dataset(opts):
             setup=opts.setup, split='val',
             num_sequences=opts.num_seq,
             subjects=subjects, serials=serials,
+            frame_stride=opts.frame_stride,
             transform=val_transform
         )
 

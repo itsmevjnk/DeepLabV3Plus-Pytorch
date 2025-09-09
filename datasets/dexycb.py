@@ -84,6 +84,7 @@ class DexYCB(Dataset):
             num_sequences: int = 100,
             subjects: list[int] = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9], # only used if setup = 'custom'
             serials: list[int] = [0, 1, 2, 3, 4, 5, 6, 7], # only used if setup = 'custom'
+            frame_stride: int = 1,
             transform: torch.nn.Module | None = None
     ):   
         if setup not in ['s0', 's1', 's2', 's3', 'custom']: raise ValueError('Invalid setup')
@@ -92,15 +93,16 @@ class DexYCB(Dataset):
         self.transform = transform
 
         # custom setup: specify subjects and serials, and split based on sequence (like below)
+        # NOTE: we want to split sequence as 70% train, 10% validation, and 20% test
         if setup == 'custom':
             subject_ind = subjects
             serial_ind = serials
             if split == 'train':
-                sequence_ind = [i for i in range(100) if i % 5 != 4]
+                sequence_ind = [i for i in range(100) if i % 10 < 7]
             if split == 'val':
-                sequence_ind = [i for i in range(100) if i % 5 == 4]
+                sequence_ind = [i for i in range(100) if i % 10 >= 7 and i % 10 < 9]
             if split == 'test':
-                sequence_ind = [i for i in range(100) if i % 5 == 4]
+                sequence_ind = [i for i in range(100) if i % 10 >= 9]
 
         # Seen subjects, camera views, grasped objects.
         if setup == 's0':
@@ -185,12 +187,12 @@ class DexYCB(Dataset):
                 sequence = seq[seq_idx]
                 for ser_idx in serial_ind:
                     serial = _SERIALS[ser_idx]
-                    self.image_paths.extend(
-                        sorted(glob(os.path.join(root, sequence, serial, 'color_*.jpg')))
-                    )
-                    self.label_paths.extend(
-                        sorted(glob(os.path.join(root, sequence, serial, 'labels_*.npz')))
-                    )
+
+                    num_frames = len(glob(os.path.join(root, sequence, serial, 'color_*.jpg')))
+
+                    for i in range(0, num_frames, frame_stride):
+                        self.image_paths.append(os.path.join(root, sequence, serial, f'color_{i:06d}.jpg'))
+                        self.label_paths.append(os.path.join(root, sequence, serial, f'labels_{i:06d}.npz'))
     
     def __len__(self):
         return len(self.image_paths)
