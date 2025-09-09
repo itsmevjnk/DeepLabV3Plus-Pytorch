@@ -19,6 +19,7 @@ from PIL import Image
 import matplotlib
 import matplotlib.pyplot as plt
 
+import time
 
 def get_argparser():
     parser = argparse.ArgumentParser()
@@ -390,63 +391,80 @@ def main():
         return
 
     interval_loss = 0
-    while True:  # cur_itrs < opts.total_itrs:
-        # =====  Train  =====
-        model.train()
-        cur_epochs += 1
-        for (images, labels) in train_loader:
-            cur_itrs += 1
+    losses = []
+    accs = []
+    mious = []
+    t_start = time.time()
+    try:
+        while True:  # cur_itrs < opts.total_itrs:
+            # =====  Train  =====
+            model.train()
+            cur_epochs += 1
+            for (images, labels) in train_loader:
+                cur_itrs += 1
 
-            images = images.to(device, dtype=torch.float32)
-            labels = labels.to(device, dtype=torch.long)
+                images = images.to(device, dtype=torch.float32)
+                labels = labels.to(device, dtype=torch.long)
 
-            optimizer.zero_grad()
-            outputs = model(images)
-            loss = criterion(outputs, labels)
-            loss.backward()
-            optimizer.step()
+                optimizer.zero_grad()
+                outputs = model(images)
+                loss = criterion(outputs, labels)
+                loss.backward()
+                optimizer.step()
 
-            np_loss = loss.detach().cpu().numpy()
-            interval_loss += np_loss
-            if vis is not None:
-                vis.vis_scalar('Loss', cur_itrs, np_loss)
+                np_loss = loss.detach().cpu().numpy()
+                interval_loss += np_loss
+                if vis is not None:
+                    vis.vis_scalar('Loss', cur_itrs, np_loss)
 
-            if (cur_itrs) % 10 == 0:
-                interval_loss = interval_loss / 10
-                print("Epoch %d, Itrs %d/%d, Loss=%f" %
-                      (cur_epochs, cur_itrs, opts.total_itrs, interval_loss))
-                interval_loss = 0.0
+                losses.append(np_loss)
 
-            if (cur_itrs) % opts.val_interval == 0:
-                save_ckpt('checkpoints/latest_%s_%s_os%d.pth' %
-                          (opts.model, opts.dataset, opts.output_stride))
-                print("validation...")
-                model.eval()
-                val_score, ret_samples = validate(
-                    opts=opts, model=model, loader=val_loader, device=device, metrics=metrics,
-                    ret_samples_ids=vis_sample_id)
-                print(metrics.to_str(val_score))
-                if val_score['Mean IoU'] > best_score:  # save best model
-                    best_score = val_score['Mean IoU']
-                    save_ckpt('checkpoints/best_%s_%s_os%d.pth' %
-                              (opts.model, opts.dataset, opts.output_stride))
+                if (cur_itrs) % 10 == 0:
+                    interval_loss = interval_loss / 10
+                    print("Epoch %d, Itrs %d/%d, Loss=%f" %
+                        (cur_epochs, cur_itrs, opts.total_itrs, interval_loss))
+                    interval_loss = 0.0
 
-                if vis is not None:  # visualize validation score and samples
-                    vis.vis_scalar("[Val] Overall Acc", cur_itrs, val_score['Overall Acc'])
-                    vis.vis_scalar("[Val] Mean IoU", cur_itrs, val_score['Mean IoU'])
-                    vis.vis_table("[Val] Class IoU", val_score['Class IoU'])
+                if (cur_itrs) % opts.val_interval == 0:
+                    save_ckpt('checkpoints/latest_%s_%s_os%d.pth' %
+                            (opts.model, opts.dataset, opts.output_stride))
+                    print("validation...")
+                    model.eval()
+                    val_score, ret_samples = validate(
+                        opts=opts, model=model, loader=val_loader, device=device, metrics=metrics,
+                        ret_samples_ids=vis_sample_id)
+                    print(metrics.to_str(val_score))
+                    if val_score['Mean IoU'] > best_score:  # save best model
+                        best_score = val_score['Mean IoU']
+                        save_ckpt('checkpoints/best_%s_%s_os%d.pth' %
+                                (opts.model, opts.dataset, opts.output_stride))
 
-                    for k, (img, target, lbl) in enumerate(ret_samples):
-                        img = (denorm(img) * 255).astype(np.uint8)
-                        target = train_dst.decode_target(target).transpose(2, 0, 1).astype(np.uint8)
-                        lbl = train_dst.decode_target(lbl).transpose(2, 0, 1).astype(np.uint8)
-                        concat_img = np.concatenate((img, target, lbl), axis=2)  # concat along width
-                        vis.vis_image('Sample %d' % k, concat_img)
-                model.train()
-            scheduler.step()
+                    accs.append(val_score['Overall Acc'])
+                    mious.append(val_score['Mean IoU'])
 
-            if cur_itrs >= opts.total_itrs:
-                return
+                    if vis is not None:  # visualize validation score and samples
+                        vis.vis_scalar("[Val] Overall Acc", cur_itrs, val_score['Overall Acc'])
+                        vis.vis_scalar("[Val] Mean IoU", cur_itrs, val_score['Mean IoU'])
+                        vis.vis_table("[Val] Class IoU", val_score['Class IoU'])
+
+                        for k, (img, target, lbl) in enumerate(ret_samples):
+                            img = (denorm(img) * 255).astype(np.uint8)
+                            target = train_dst.decode_target(target).transpose(2, 0, 1).astype(np.uint8)
+                            lbl = train_dst.decode_target(lbl).transpose(2, 0, 1).astype(np.uint8)
+                            concat_img = np.concatenate((img, target, lbl), axis=2)  # concat along width
+                            vis.vis_image('Sample %d' % k, concat_img)
+                    model.train()
+                scheduler.step()
+
+                if cur_itrs >= opts.total_itrs:
+                    break
+    finally:
+        t_stop = time.time()
+        np.savetxt(f'{t_stop}_loss.csv', np.array(losses), delimiter=',')
+        np.savetxt(f'{t_stop}_acc.csv', np.array(accs), delimiter=',')
+        np.savetxt(f'{t_stop}_miou.csv', np.array(mious), delimiter=',')
+        print(f'Training stopped after {(t_stop - t_start):.3f} sec')
+        pass
 
 
 if __name__ == '__main__':

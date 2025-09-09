@@ -10,3 +10,6 @@ checkpoints_bak
 cityscapes
 test_results
 results.csv
+*_acc.csv
+*_loss.csv
+*_miou.csv
