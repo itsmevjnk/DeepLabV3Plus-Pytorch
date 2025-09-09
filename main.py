@@ -397,7 +397,7 @@ def main():
     losses = []
     accs = []
     mious = []
-    t_start = time.time()
+    t_start = int(time.time())
     try:
         while True:  # cur_itrs < opts.total_itrs:
             # =====  Train  =====
@@ -462,11 +462,11 @@ def main():
                 if cur_itrs >= opts.total_itrs:
                     break
     finally:
-        t_stop = time.time()
+        t_stop = int(time.time())
         np.savetxt(f'{t_stop}_loss.csv', np.array(losses), delimiter=',')
         np.savetxt(f'{t_stop}_acc.csv', np.array(accs), delimiter=',')
         np.savetxt(f'{t_stop}_miou.csv', np.array(mious), delimiter=',')
-        print(f'Training stopped after {(t_stop - t_start):.3f} sec')
+        print(f'Training stopped after {t_stop - t_start} sec')
         pass
 
 
