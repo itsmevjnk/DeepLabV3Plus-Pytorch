@@ -192,7 +192,7 @@ def get_dataset(opts):
             setup=opts.setup, split='val',
             num_sequences=opts.num_seq,
             subjects=subjects, serials=serials,
-            transform=train_transform
+            transform=val_transform
         )
 
     return train_dst, val_dst
