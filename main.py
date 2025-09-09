@@ -64,6 +64,7 @@ def get_argparser():
     parser.add_argument("--ckpt", default=None, type=str,
                         help="restore from checkpoint")
     parser.add_argument("--continue_training", action='store_true', default=False)
+    parser.add_argument("--freeze_backbone", action='store_true', default=False)
     parser.add_argument("--freeze", type=str, default=None,
                         help="freeze classifier layers (by model.classifier.classifier index) during transfer learning")
 
@@ -349,6 +350,11 @@ def main():
             model.classifier.classifier[last_layer] = nn.Conv2d(256, state_num_classes, 1) # so we can load the rest
             reset_last_layer = True
         model.load_state_dict(state)
+        if opts.freeze_backbone:
+            print(f'Freezing backbone layers.')
+            for module in model.backbone.modules():
+                for param in module.parameters():
+                    param.requires_grad = False
         if opts.freeze is not None:
             for i in [int(x) for x in opts.freeze.split(',')]:
                 print(f'Freezing classifier layer {i}.')
