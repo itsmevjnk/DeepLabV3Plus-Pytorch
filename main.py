@@ -398,6 +398,10 @@ def main():
     accs = []
     mious = []
     t_start = int(time.time())
+    def save_stats():
+        np.savetxt(f'{t_start}_loss.csv', np.array(losses), delimiter=',')
+        np.savetxt(f'{t_start}_acc.csv', np.array(accs), delimiter=',')
+        np.savetxt(f'{t_start}_miou.csv', np.array(mious), delimiter=',')
     try:
         while True:  # cur_itrs < opts.total_itrs:
             # =====  Train  =====
@@ -444,6 +448,7 @@ def main():
 
                     accs.append(val_score['Overall Acc'])
                     mious.append(val_score['Mean IoU'])
+                    save_stats()
 
                     if vis is not None:  # visualize validation score and samples
                         vis.vis_scalar("[Val] Overall Acc", cur_itrs, val_score['Overall Acc'])
@@ -463,9 +468,7 @@ def main():
                     break
     finally:
         t_stop = int(time.time())
-        np.savetxt(f'{t_stop}_loss.csv', np.array(losses), delimiter=',')
-        np.savetxt(f'{t_stop}_acc.csv', np.array(accs), delimiter=',')
-        np.savetxt(f'{t_stop}_miou.csv', np.array(mious), delimiter=',')
+        save_stats()
         print(f'Training stopped after {t_stop - t_start} sec')
         pass
 
