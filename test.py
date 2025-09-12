@@ -71,8 +71,9 @@ try:
 
         # metrics for each batch
         pix_acc = [] # pixel-wise accuracy
-        cls_acc = [[] for i in range(NUM_CLASSES)] # class accuracy
-        iou = [[] for i in range(NUM_CLASSES)] # IoU for each class
+        cls_acc_isect = np.zeros(NUM_CLASSES) # class accuracy (and also IoU): intersecting pixel sum
+        cls_acc_gt = np.zeros(NUM_CLASSES) # class accuracy: ground truth pixel sum
+        iou_union = np.zeros(NUM_CLASSES) # IoU: union pixel sum
 
         with torch.no_grad():
             model = model.eval() # run in evaluation mode
@@ -99,19 +100,20 @@ try:
                     # per-class accuracy
                     intersection = np.logical_and(preds_msk, labels_msk).sum() # also true positive
                     gt_count = labels_msk.sum() # ground truth pixel count
-                    cls_acc[cls].append(float('nan') if gt_count == 0 else intersection / gt_count)
+                    cls_acc_isect[cls] += intersection
+                    cls_acc_gt[cls] += gt_count
 
                     # IoU
                     union = np.logical_or(preds_msk, labels_msk).sum()
-                    iou[cls].append(float('nan') if union == 0 else intersection / union)
+                    iou_union[cls] += union
 
                 # if i >= 1: break
 
         entry['Pixel accuracy'] = np.nanmean(pix_acc)
-        cls_acc = np.nanmean(cls_acc, axis=1) # average per class
-        iou = np.nanmean(iou, axis=1)
+        cls_acc = cls_acc_isect / cls_acc_gt # class accuracy (per class)
         entry['Mean class accuracy'] = np.nanmean(cls_acc)
-        entry['Mean IoU'] = np.nanmean(iou)
+        iou = cls_acc_isect / iou_union # IoU (per class)
+        entry['Mean IoU'] = np.nanmean(iou) # mean IoU over entire dataset
         for cls in range(NUM_CLASSES):
             entry[f'{cls} accuracy'] = cls_acc[cls]
             entry[f'{cls} IoU'] = iou[cls]
