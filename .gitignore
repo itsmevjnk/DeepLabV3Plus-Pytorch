@@ -13,3 +13,6 @@ results.csv
 *_acc.csv
 *_loss.csv
 *_miou.csv
+image.jpg
+mask*.png
+
