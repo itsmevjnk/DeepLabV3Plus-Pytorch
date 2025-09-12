@@ -1,3 +1,13 @@
+# The following script tests the trained models and reports accuracy statistics to results.csv.
+# These files in checkpoints/ are expected to exist:
+#  - best_mobilenet_scratch.pth
+#  - best_mobilenet_separable.pth
+#  - best_mobilenet_transfer.pth
+#  - best_mobilenet_transfer_single.pth
+#  - best_resnet50_scratch.pth
+# The training script, as well as the network definitions and other support utilities, are available at:
+#   https://github.com/itsmevjnk/DeepLabV3Plus-Pytorch
+
 import torch
 from torch.utils import data
 from torch import nn
